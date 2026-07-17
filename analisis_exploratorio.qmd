@@ -1,0 +1,18 @@
+---
+title: "proyecto_final_cdr"
+format: html
+editor: visual
+embed-resources: true
+---
+
+```{r}
+#| output: false
+library(readr)
+library(tidyverse)
+
+df <- read_csv("ObesityDataSet_raw_and_data_sinthetic.csv")
+```
+
+```{r}
+glimpse(df)
+```
