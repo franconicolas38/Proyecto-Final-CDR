@@ -152,20 +152,28 @@ split = initial_split(df, prop = 0.8, strata = NObeyesdad)
 train_df = training(split)
 test_df = testing(split)
 
+receta_rf <- recipe(NObeyesdad ~ ., data = train_df) |> 
+  step_rm(Weight, Height)
+
 rforest = 
   rand_forest(trees = 500) |> 
   set_engine("ranger", importance = "impurity") |> 
-  set_mode("classification") |> 
-  fit(NObeyesdad ~ . - Weight - Height, data = train_df)
+  set_mode("classification") 
+
+wf_rforest = 
+  workflow() |>
+  add_recipe(receta_rf) |> 
+  add_model(rforest) |> 
+  fit(data = train_df)
 ```
 
 ```{r}
-pred_rf <- 
-  predict(rforest, test_df, type = "class") |> 
+pred_rf <- predict(wf_rforest, test_df, type = "class") |> 
   bind_cols(test_df)
+
 metricas_rf <- metric_set(accuracy, precision, recall, f_meas)
-pred_rf |> metricas_rf(truth = NObeyesdad, estimate = .pred_class)
+pred_rf |> metricas_rf(truth = NObeyesdad, estimate = .pred_class) 
 
-rforest |> vip()
+extract_fit_engine(wf_rforest) |> vip()
 ```
-
+Con esto podemos concluir que las variables que mas influyen en el nivel de sobrepeso son la edad, el consumo de vegetales y la cantidad de horas de uso de celular
