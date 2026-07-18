@@ -16,19 +16,19 @@ La base de datos está basada en encuestas web a individuos de México, Perú y 
 
 La variable de respuesta de la base de datos es NObeyesdad. Cada individuo fue categorizado según el siguiente criterio:
 
--   Insufficient_Weight (Bajo peso): IMC \< 18.5
+- Insufficient_Weight (Bajo peso): IMC \< 18.5
 
--   Normal_Weight (Peso normal): IMC entre 18.5 y 24.9
+- Normal_Weight (Peso normal): IMC entre 18.5 y 24.9
 
--   Overweight_Level_I (Sobrepeso Nivel 1): IMC entre 25.0 y 26.9
+- Overweight_Level_I (Sobrepeso Nivel 1): IMC entre 25.0 y 26.9
 
--   Overweight_Level_II (Sobrepeso Nivel 2): IMC entre 27.0 y 29.9
+- Overweight_Level_II (Sobrepeso Nivel 2): IMC entre 27.0 y 29.9
 
--   Obesity_Type_I (Obesidad Tipo 1): IMC entre 30.0 y 34.9
+- Obesity_Type_I (Obesidad Tipo 1): IMC entre 30.0 y 34.9
 
--   Obesity_Type_II (Obesidad Tipo 2): IMC entre 35.0 y 39.9
+- Obesity_Type_II (Obesidad Tipo 2): IMC entre 35.0 y 39.9
 
--   Obesity_Type_III (Obesidad Tipo 3 o mórbida): IMC $\ge$ 40.0
+- Obesity_Type_III (Obesidad Tipo 3 o mórbida): IMC $\ge$ 40.0
 
 donde $$\text{IMC} = \frac{\text{Peso (kg)}}{\text{Estatura (m)}^2}$$
 
@@ -44,13 +44,13 @@ Cada una de las variables refiere a una pregunta:
 | ¿Consumes con frecuencia alimentos ricos en calorías? “FAVC” | • Sí • No |
 | ¿Sueles comer verduras en tus comidas? “FCVC” | • Nunca • A veces • Siempre |
 | ¿Cuántas comidas principales haces al día? “NCP” | • Entre 1 y 2 • Tres • Más de tres |
-| ¿Comes algo entre comidas? “CAEC” | • No • A veces •Frecuentemente • Siempre |
+| ¿Comes algo entre comidas? “CAEC” | • No • A veces • Frecuentemente • Siempre |
 | ¿Fuma usted? “SMOKE” | • Sí • No |
-| ¿Cuánta agua bebes diariamente? “CH2O” | • Menos de un litro •Entre 1 y 2 L • Más de 2 litros |
+| ¿Cuánta agua bebes diariamente? “CH2O” | • Menos de un litro • Entre 1 y 2 L • Más de 2 litros |
 | ¿Controlas las calorías que consumes diariamente? “SCC” | • Sí • No |
 | ¿Con qué frecuencia realizas actividad física? “FAF” | • No tengo • 1 o 2 días • 2 o 4 días • 4 o 5 días |
 | ¿Cuánto tiempo utilizas dispositivos tecnológicos como el teléfono móvil, los videojuegos, la televisión, el ordenador y otros? “TUE” | • 0–2 horas • 3–5 horas • Más de 5 horas |
-| ¿Con qué frecuencia bebes alcohol? “CALC” | • No bebo • A veces •Frecuentemente • Siempre |
+| ¿Con qué frecuencia bebes alcohol? “CALC” | • No bebo • A veces • Frecuentemente • Siempre |
 | ¿Qué medio de transporte utilizas habitualmente? “MTRANS” | • Automóvil • Moto • Bicicleta • Transporte público • Caminando |
 
 ```{r}
@@ -100,16 +100,16 @@ df |>
 
 En gráfico de puntos, se observa la categorización que se realizó según la relación entre peso y altura (IMC). Además, en general, se puede ver una relación postiva entre peso y altura, a mayor altura, mayor peso.
 
-
 ## Análisis exploratorio:
+
 ```{r}
 df |> 
-  ggplot(aes(x=NObeyesdad, fill = family_history_with_overweight))+
+  ggplot(aes(y = NObeyesdad, fill = family_history_with_overweight)) +
   geom_bar() +
-  coord_flip() +
-  labs(title= "obesidad segun historial familiar",
-       x = "Categoria",
-       y="Cantidad") +theme_bw()
+  labs(title= "Obesidad según historial familiar",
+       y = "Categoria",
+       x = "Cantidad") +
+  theme_bw()
 ```
 
 Aca logramos ver una gran tendencia, dado que tener un historial familiar con sobrepeso lleva a una mayor porbabilidad de poseerlo también. Se ve como ya en los niveles de obesidad tipo 2 y 3 únicamente hay personas con historial de sobrepeso en su familia.
@@ -126,6 +126,7 @@ df |>
 ```
 
 En el gráfico de barras podemos observar una asimetría hacia la derecha, es decir, la moda de la districibución se encuentra en el nivel 1 (actividad física 1 o 2 días por semana), y a mayor nivel de actividad física, menor cantidad de personas. A su vez, vemos que esta simetría se acentua más, o directamente hay una relación negativa en las categorías de mayor sobrepeso.
+
 
 ```{r}
 table(df$NObeyesdad, df$SMOKE) |> addmargins() |> kable()
@@ -146,6 +147,7 @@ Aca logramos ver como dentro de los no fumadores, la frecuencia se distribuye pr
 ## Modelos de predicción:
 
 Random Forest:
+
 ```{r}
 set.seed(1)
 split = initial_split(df, prop = 0.8, strata = NObeyesdad)
@@ -156,7 +158,7 @@ receta_rf <- recipe(NObeyesdad ~ ., data = train_df) |>
   step_rm(Weight, Height)
 
 rforest = 
-  rand_forest(trees = 500) |> 
+  rand_forest(min_n = 5) |> 
   set_engine("ranger", importance = "impurity") |> 
   set_mode("classification") 
 
@@ -172,8 +174,77 @@ pred_rf <- predict(wf_rforest, test_df, type = "class") |>
   bind_cols(test_df)
 
 metricas_rf <- metric_set(accuracy, precision, recall, f_meas)
-pred_rf |> metricas_rf(truth = NObeyesdad, estimate = .pred_class) 
+pred_rf |> metricas_rf(truth = NObeyesdad, estimate = .pred_class) |> kable()
+
+conf_mat(pred_rf, truth = NObeyesdad, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = "blue")
+
 
 extract_fit_engine(wf_rforest) |> vip()
 ```
+
 Con esto podemos concluir que las variables que mas influyen en el nivel de sobrepeso son la edad, el consumo de vegetales y la cantidad de horas de uso de celular
+
+
+
+```{r}
+ df |> ggplot() +
+  geom_density(aes(x = Age, fill = NObeyesdad)) +
+  theme_bw() + 
+  theme(legend.position = "none") +
+  facet_wrap(~NObeyesdad)
+```
+
+```{r}
+df |> 
+  ggplot() +
+  geom_bar(aes(x = round(FCVC), fill = NObeyesdad), position = "dodge") +
+  theme_bw()
+```
+
+```{r}
+table(df$NObeyesdad, df$Gender) |> addmargins() 
+df |> 
+  ggplot() +
+  geom_bar(aes(y = NObeyesdad, fill = Gender), position = "dodge") +
+  theme_bw()
+```
+
+```{r}
+set.seed(1)
+split = initial_split(df, prop = 0.8, strata = NObeyesdad)
+train_df = training(split)
+test_df = testing(split)
+
+receta_rf2 <- recipe(NObeyesdad ~ ., data = train_df) |> 
+  step_rm(Weight, Height, Age, Gender)
+
+rforest2 = 
+  rand_forest(trees = 1000) |> 
+  set_engine("ranger", importance = "impurity") |> 
+  set_mode("classification") 
+
+wf_rforest2 = 
+  workflow() |>
+  add_recipe(receta_rf2) |> 
+  add_model(rforest2) |> 
+  fit(data = train_df)
+```
+
+```{r}
+pred_rf2 <- predict(wf_rforest2, test_df, type = "class") |> 
+  bind_cols(test_df)
+
+metricas_rf <- metric_set(accuracy, precision, recall, f_meas)
+pred_rf2 |> metricas_rf(truth = NObeyesdad, estimate = .pred_class) |> kable()
+
+conf_mat(pred_rf2, truth = NObeyesdad, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = "blue")
+
+
+extract_fit_engine(wf_rforest2) |> vip()
+```
+```
+
