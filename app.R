@@ -6,6 +6,9 @@ library(plotly)
 library(DT)
 
 df <- read_csv("ObesityDataSet_raw_and_data_sinthetic.csv")
+
+# Redondeamos variables númericas (que tienen valores con coma por los datos sintéticos) para que sean factores
+ # y no haya problema en los gráficos.
 df =
   df |> mutate(NObeyesdad = factor(NObeyesdad,
                                    levels = c("Insufficient_Weight",
@@ -17,7 +20,7 @@ df =
                                               "Obesity_Type_III"),
                                    ordered = TRUE),
                across(c(FCVC,NCP,CH2O,FAF,TUE),round),
-               across(c(FCVC,NCP,CH2O,FAF,TUE),as.factor))
+               across(c(FCVC,NCP,CH2O,FAF,TUE),as.factor)) 
                  
 variables_factor = names(df)[-(2:4)]
 variables_numericas = names(df)[2:4]
@@ -26,6 +29,7 @@ variables_numericas = names(df)[2:4]
 ui = navbarPage(
   title = "Explorador de datos - Obesidad",
   
+  # --- Primer pestaña --- #
   tabPanel("Inicio",
            h2("Bienvenido/a"),
            p("Esta aplicación permite explorar el dataset de obesidad, cruzando
@@ -33,7 +37,7 @@ ui = navbarPage(
            p("Usá la pestaña 'Exploración' para explorar el dataset,
               o 'Calculadora IMC' para calcular tu índice de masa corporal.")
   ),
-  
+   # --- Segunda pestaña --- #
   tabPanel("Base de datos",
            sidebarLayout(
              sidebarPanel(
@@ -47,9 +51,11 @@ ui = navbarPage(
            )
   ),
   
+  # --- Tercer pestaña --- #
   tabPanel("Exploración",
            sidebarLayout(
              sidebarPanel(
+               # Elige el tipo de variables que quiere observar
                radioButtons("tipo_grafico", "Tipo de análisis:",
                             choices = c("Una variable numérica" = "num",
                                         "Una variable categórica" = "cat",
@@ -94,7 +100,9 @@ ui = navbarPage(
              mainPanel(
                tabsetPanel(
                  id = "tabs",
+                 # Primer pestaña dentro de Exploración
                  tabPanel("Gráfico",
+                          # Se condicionan distintos aspectos del gráfico según las variables que eligen
                           conditionalPanel(
                             condition = "input.tipo_grafico != '2cat'",
                             radioButtons("coloreado", "Coloreado",
@@ -113,7 +121,8 @@ ui = navbarPage(
                                                      "Proporción" = "prop"),
                                          selected = "cant")
                           ),
-                          plotOutput("bar")),
+                          plotOutput("grafico")),
+                 # Segunda pestaña dentro de Exploración
                  tabPanel("Resumen",
                           uiOutput("titulo_resumen"),
                           verbatimTextOutput("resumen"))
@@ -121,14 +130,14 @@ ui = navbarPage(
              )
            )
   ),
-  
+  # --- Cuarta pestaña --- #
   tabPanel("Calculadora IMC",
            sidebarLayout(
              sidebarPanel(numericInput("peso", "Peso (kg):", value = 70, min = 1, max = 300),
                           numericInput("altura", "Altura (m):", value = 1.70, min = 0.5, max = 2.5, step = 0.01)
                
              ),
-             mainPanel(h2("Resultado:"),
+             mainPanel(h2("Resultado:"),                # La funciones h2() y h4() refieren al tamaño del texto
                        h4(textOutput("resultado_imc")),
                        h4(textOutput("categoria_imc")),
                        plotlyOutput("plot_imc"))
@@ -139,6 +148,8 @@ ui = navbarPage(
 
 server = function(input, output) {
   
+  # Se usa reactive para que los datos se filtren una única vez.
+  # Cada reactive refiere a cada pestaña donde se pueden filtrar los datos
   datos_filtrados_base = reactive({
     req(input$NObeyesdad_base)
     df[df$NObeyesdad %in% input$NObeyesdad_base, ]
@@ -149,9 +160,10 @@ server = function(input, output) {
     df[df$NObeyesdad %in% input$NObeyesdad_exp, ]
   })
   
-  output$bar = renderPlot({
+  # Se grafica según que variables se elige
+  output$grafico = renderPlot({
     
-    if (input$tipo_grafico == "num") { # Elige variable númerica
+    if (input$tipo_grafico == "num") { ## Elige variable númerica
       if (input$coloreado == "gral") { # y elige colorear general
         
           ggplot(datos_filtrados_exp(),
@@ -165,7 +177,7 @@ server = function(input, output) {
           geom_density(alpha = input$alpha) +
           theme_minimal(base_size = 16)
       }
-    } else if (input$tipo_grafico == "cat") { # Elige variable categorica
+    } else if (input$tipo_grafico == "cat") { ## Elige variable categorica
       
       if (input$coloreado == "gral") { # y elige colorear general
         
@@ -190,7 +202,7 @@ server = function(input, output) {
               theme_minimal(base_size = 16)
           }
       }
-    } else if (input$tipo_grafico == "2num") { # Elige dos variables numericas
+    } else if (input$tipo_grafico == "2num") { ## Elige dos variables numericas
           
         if (input$coloreado == "gral") { # y elige colorear general
           ggplot(datos_filtrados_exp(),
@@ -203,14 +215,14 @@ server = function(input, output) {
           geom_point(aes(color = NObeyesdad), alpha = input$alpha) +
           theme_minimal(base_size = 16)
       }
-    } else if (input$tipo_grafico == "2cat") { # Elige dos variables categoricas
+    } else if (input$tipo_grafico == "2cat") { ## Elige dos variables categoricas
         ggplot(datos_filtrados_exp(),
            aes(x = .data[[input$var_cat1]], fill = .data[[input$var_cat2]])) +
         geom_bar(position = "dodge") +
         labs(y = "Cantidad") +
         theme_minimal(base_size = 20)
     
-    } else if (input$tipo_grafico == "cruzado") { # Elige una numerica y una categorica
+    } else if (input$tipo_grafico == "cruzado") { ## Elige una numerica y una categorica
         if (input$coloreado == "gral") {          # y elige colorear normal
             ggplot(datos_filtrados_exp(),
                  aes(x = .data[[input$var_cat_c]], y = .data[[input$var_num_c]])) +
@@ -226,41 +238,43 @@ server = function(input, output) {
     } 
   })
   
+  # Titulo dentro de la pestaña resumen. Varia según las variables elegidas y el coloreado
   output$titulo_resumen = renderUI({
     
-    texto = if (input$tipo_grafico == "num") {
+    texto = if (input$tipo_grafico == "num") {  ## Elige variable númerica
       paste("Medidas de resumen de", input$var_num)
       
-    } else if (input$tipo_grafico == "cat") {
-      if (input$coloreado == "gral") {
+    } else if (input$tipo_grafico == "cat") {  ## Elige variable categorica
+      if (input$coloreado == "gral") {          # y coloreado normal
         paste("Frecuencias de", input$var_cat)
-      } else {
+      } else {                                  # o coloreado según NObeyesdad
         paste("Tabla de contingencia de", input$var_cat, "con Nivel de Obesidad")
       }
       
-    } else if (input$tipo_grafico == "2num") {
+    } else if (input$tipo_grafico == "2num") { ## Elige dos variables numericas
       paste("Covarianza y correlación entre", input$var_num1, "y", input$var_num2)
       
-    } else if (input$tipo_grafico == "2cat") {
+    } else if (input$tipo_grafico == "2cat") { ## Elige dos variables categoricas
       paste("Tabla de contingencia de", input$var_cat1, "con", input$var_cat2)
       
-    } else if (input$tipo_grafico == "cruzado") {
-      if (input$coloreado == "gral") {
+    } else if (input$tipo_grafico == "cruzado") { ## Elige una variable de cada tipo
+      if (input$coloreado == "gral") {             # y coloreado normal
         paste("Resumen de", input$var_num_c, "según", input$var_cat_c)
-      } else {
+      } else {                                     # o coloreado según NObeyesdad
         paste("Resumen de", input$var_num_c, "según", input$var_cat_c, "y Nivel de Obesidad")
       }
     }
     
-    h4(texto)
+    h4(texto) # Tamaño de dicho titulo
   })
   
+  # Tablas o medidas de resumen sobre las variables elegidas.
   output$resumen = renderPrint({
     datos = datos_filtrados_exp()
     
-    if (input$tipo_grafico == "num") {
+    if (input$tipo_grafico == "num") { ## Elige variable numerica
       x = datos[[input$var_num]]
-      if (input$coloreado == "gral") {
+      if (input$coloreado == "gral") { # y coloreado normal
         data.frame(
           Min = round(min(x), 2),
           Q1 = round(quantile(x, 0.25), 2),
@@ -273,7 +287,7 @@ server = function(input, output) {
           row.names = NULL
         )
       
-      } else {
+      } else {                      # o coloreado según NObeyesdad
         datos |> group_by(NObeyesdad) |> 
           summarise(Min = round(min(.data[[input$var_num]]), 2),
                     Q1 = round(quantile(.data[[input$var_num]], 0.25), 2),
@@ -284,24 +298,26 @@ server = function(input, output) {
                     Varianza = round(var(.data[[input$var_num]]), 2),
                     Desvio = round(sd(.data[[input$var_num]]), 2))
       }
-    } else if (input$tipo_grafico == "cat") {
-        if (input$coloreado == "gral") {
+    } else if (input$tipo_grafico == "cat") { ## Elige variable categorica
+        if (input$coloreado == "gral") {      # y elige colorear normal
           table(datos[[input$var_cat]]) |> addmargins()
         
-        } else {
-          addmargins(table(datos$NObeyesdad, datos[[input$var_cat]]))
-        }
+        } else if (input$eje_y == "cant") {     # o coloreado según NObeyesdad y la cantidad
+          table(datos$NObeyesdad, datos[[input$var_cat]]) |> addmargins()
+        } else {                                # o coloreado según NObeyesdad y las proporciones
+          table(datos$NObeyesdad, datos[[input$var_cat]]) |> prop.table(margin = 2) |> round(2) 
+        } 
     
-    } else if (input$tipo_grafico == "2num") {
+    } else if (input$tipo_grafico == "2num") { ## Elige dos variables numericas
         data.frame(Covarianza = cov(datos[[input$var_num1]], datos[[input$var_num2]]),
                    Correlacion = cor(datos[[input$var_num1]], datos[[input$var_num2]])) 
         
     
-    } else if (input$tipo_grafico == "2cat") {
+    } else if (input$tipo_grafico == "2cat") { ## Elige dos variables categoricas
         table(datos[[input$var_cat1]], datos[[input$var_cat2]]) |> addmargins()
     
-    } else if (input$tipo_grafico == "cruzado") {
-        if (input$coloreado == "gral") {
+    } else if (input$tipo_grafico == "cruzado") { ## Elige una variable de cada tipo
+        if (input$coloreado == "gral") {        # y coloreado normal
           datos |>
             group_by(.data[[input$var_cat_c]]) |>
             summarise(
@@ -315,7 +331,7 @@ server = function(input, output) {
               Desvio = round(sd(.data[[input$var_num_c]]), 2)
             )
       
-        } else {
+        } else {                               # o según NObeyesdad
           datos |>
             group_by(.data[[input$var_cat_c]], NObeyesdad) |>
             summarise(
@@ -333,15 +349,17 @@ server = function(input, output) {
     }
   })
   
+  # Dataset interactivo en pestaña Base de datos
   output$tabla = renderDT({
     datos_filtrados_base()
   })
   
+  # Se usa reactive para hacer el cálculo una unica vez
   imc = reactive({
     req(input$peso, input$altura)
     input$peso / (input$altura^2)
   })
-  
+  # Resultados del calculo de IMC 
   output$resultado_imc = renderText({
     paste("Tu IMC es:", round(imc(), 2))
   })
@@ -360,14 +378,15 @@ server = function(input, output) {
     paste("Categoría:", categoria)
   })
   
+  # Gráfico en pestaña IMC que muestra donde se encuentra el peso y la altura en el dataset
   output$plot_imc = renderPlotly({
-    grafico = ggplot(datos_filtrados_exp()) +
+    imc_grafico = ggplot(datos_filtrados_exp()) +
       geom_point(aes(x = Weight, y = Height, color = NObeyesdad)) +
       geom_vline(xintercept = input$peso) +
       geom_hline(yintercept = input$altura) +
       theme_minimal(base_size = 12) 
     
-    ggplotly(grafico)
+    ggplotly(imc_grafico)
   })
 }
 
