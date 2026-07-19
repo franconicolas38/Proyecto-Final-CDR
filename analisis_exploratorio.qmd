@@ -17,19 +17,19 @@ La base de datos está basada en encuestas web a individuos de México, Perú y 
 
 La variable de respuesta de la base de datos es NObeyesdad. Cada individuo fue categorizado según el siguiente criterio:
 
--   Insufficient_Weight (Bajo peso): IMC \< 18.5
+- Insufficient_Weight (Bajo peso): IMC \< 18.5
 
--   Normal_Weight (Peso normal): IMC entre 18.5 y 24.9
+- Normal_Weight (Peso normal): IMC entre 18.5 y 24.9
 
--   Overweight_Level_I (Sobrepeso Nivel 1): IMC entre 25.0 y 26.9
+- Overweight_Level_I (Sobrepeso Nivel 1): IMC entre 25.0 y 26.9
 
--   Overweight_Level_II (Sobrepeso Nivel 2): IMC entre 27.0 y 29.9
+- Overweight_Level_II (Sobrepeso Nivel 2): IMC entre 27.0 y 29.9
 
--   Obesity_Type_I (Obesidad Tipo 1): IMC entre 30.0 y 34.9
+- Obesity_Type_I (Obesidad Tipo 1): IMC entre 30.0 y 34.9
 
--   Obesity_Type_II (Obesidad Tipo 2): IMC entre 35.0 y 39.9
+- Obesity_Type_II (Obesidad Tipo 2): IMC entre 35.0 y 39.9
 
--   Obesity_Type_III (Obesidad Tipo 3 o mórbida): IMC $\ge$ 40.0
+- Obesity_Type_III (Obesidad Tipo 3 o mórbida): IMC $\ge$ 40.0
 
 donde $$\text{IMC} = \frac{\text{Peso (kg)}}{\text{Estatura (m)}^2}$$
 
@@ -185,7 +185,7 @@ conf_mat(pred_rf, truth = NObeyesdad, estimate = .pred_class) |>
 
 En las métricas, una accuracy de 0,86 junto con valores similares de precision, recall y F1 indican que el modelo generaliza bien, sin señales de overfitting ni underffiting.
 
-En la matriz de confusión vemos que la mayor concentración de casos está sobre la diagonal, lo que muestra que el modelo tiene un buen desempeño. Los errores que sí aparecen se concentran mayormente entre categorías más similares (por ejemplo, confundir Overweight_Level_I con Overweight_Level_II, Obesity_Type_I con Obesity_Type_II). En cambio, no hay confusión entre categorías muy alejadas entre sí (como Insufficient_Weight y Obesity_Type_III). Lo que indica la mayor dificultad de distinguir el límite entre los tipos de sobrepeso y obecidad que entre las categorias
+En la matriz de confusión vemos que la mayor concentración de casos está sobre la diagonal, lo que muestra que el modelo tiene un buen desempeño. Los errores que sí aparecen se concentran mayormente entre categorías más similares (por ejemplo, confundir Overweight_Level_I con Overweight_Level_II, Obesity_Type_I con Obesity_Type_II). En cambio, no hay confusión entre categorías muy alejadas entre sí (como Insufficient_Weight y Obesity_Type_III). Lo que indica la mayor dificultad de distinguir el límite entre los tipos de sobrepeso y obesidad que entre las categorias
 
 ```{r}
 wf_rforest |> 
@@ -193,7 +193,7 @@ wf_rforest |>
   vip()
 ```
 
-El vip nos muestra que la edad, el consuma de vegetales y el tiepo de uso de celular son las variables con mayor nivel predictivo del modelo, incluso más que las variables que nosotros pensamos en un inicio que serian las más determinantees (actividad fisica e historial familiar). Cabe aclarar que expcluimos el peso y la altura, ya que NObeyesdad se construye a partir de IMC (que depende unicamente de peso y altura), de no haberlo hecho estas habrían dominado el modelo en su totalidad.
+El vip nos muestra que la edad, el consuma de vegetales y el tiepmo de uso de celular son las variables con mayor nivel predictivo del modelo, incluso más que las variables que nosotros pensamos en un inicio que serian las más determinantees (actividad fisica e historial familiar). Cabe aclarar que expcluimos el peso y la altura, ya que NObeyesdad se construye a partir de IMC (que depende unicamente de peso y altura), de no haberlo hecho estas habrían dominado el modelo en su totalidad.
 
 Árbol de decisión:
 
@@ -243,12 +243,16 @@ En cuanto a las variables más relevantes, el árbol de decisión toma el consum
   facet_wrap(~NObeyesdad)
 ```
 
+En este gráfico podemos observar las edades de las personas en las distintas categorías de índice de masa corporal.En las categorías de IMC más bajas se puede observar que que la mayoría de las personas de dichas categorías son de edad más baja que en las categorías de obesidad, donde se puede observar que hay más personas cerca de los 30 o 40 años.
+
 ```{r}
 df |> 
   ggplot() +
   geom_bar(aes(x = round(FCVC), fill = NObeyesdad), position = "dodge") +
   theme_bw()
 ```
+
+En esta gráfica podemos observar la cantidad de personas de las distintas categorías en función de con cuanta frecuencia suelen incluir vegetales en sus comidas, siendo 1 ¨Nunca¨ , 2 ¨A veces¨ y 3 ¨Siempre¨, donde observamos que la mayoria de las personas consume verduras en sus comidas aunque sea a veces, y que las personas con obesidad tipo 3 siempre incluyen verduras en sus comidas, lo cual puede parecer contraintuitivo
 
 ```{r}
 table(df$NObeyesdad, df$Gender) |> addmargins() 
@@ -257,6 +261,8 @@ df |>
   geom_bar(aes(y = NObeyesdad, fill = Gender), position = "dodge") +
   theme_bw()
 ```
+
+En esta gràfica se observa la clasificaciòn por gèneros de las distintas categorìas estudiadas
 
 ```{r}
 set.seed(1)
