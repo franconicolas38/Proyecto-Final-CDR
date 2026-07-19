@@ -59,6 +59,7 @@ Cada una de las variables refiere a una pregunta:
 library(readr)
 library(tidyverse)
 library(knitr)
+library(ggmosaic)
 library(tidymodels)
 library(vip)
 library(rpart.plot)
@@ -102,6 +103,26 @@ df |>
 
 En gráfico de puntos, se observa la categorización que se realizó según la relación entre peso y altura (IMC). Además, en general, se puede ver una relación postiva entre peso y altura, a mayor altura, mayor peso.
 
+```{r}
+ df |> ggplot() +
+  geom_density(aes(x = Age, fill = NObeyesdad)) +
+  theme_bw() + 
+  theme(legend.position = "none") +
+  facet_wrap(~NObeyesdad)
+```
+
+En este gráfico podemos observar las edades de las personas en las distintas categorías de índice de masa corporal.En las categorías de IMC más bajas se puede observar que que la mayoría de las personas de dichas categorías son de edad más baja que en las categorías de obesidad, donde se puede observar que hay más personas cerca de los 30 o 40 años.
+
+```{r}
+table(df$NObeyesdad, df$Gender) |> addmargins() |> kable()
+df |> 
+  ggplot() +
+  geom_bar(aes(y = NObeyesdad, fill = Gender), position = "dodge") +
+  theme_bw()
+```
+
+En esta gràfica se observa la clasificaciòn por gèneros de las distintas categorìas estudiadas
+
 ## Análisis exploratorio:
 
 ```{r}
@@ -129,10 +150,32 @@ df |>
 
 En el gráfico de barras podemos observar una asimetría hacia la derecha, es decir, la moda de la districibución se encuentra en el nivel 1 (actividad física 1 o 2 días por semana), y a mayor nivel de actividad física, menor cantidad de personas. A su vez, vemos que esta simetría se acentua más, o directamente hay una relación negativa en las categorías de mayor sobrepeso.
 
+
+```{r}
+df |> 
+  ggplot() +
+  geom_bar(aes(x = round(FCVC), fill = NObeyesdad), position = "dodge") +
+  theme_bw()
+```
+
+En esta gráfica podemos observar la cantidad de personas de las distintas categorías en función de con cuanta frecuencia suelen incluir vegetales en sus comidas, siendo 1 ¨Nunca¨ , 2 ¨A veces¨ y 3 ¨Siempre¨, donde observamos que la mayoria de las personas consume verduras en sus comidas aunque sea a veces, y que las personas con obesidad tipo 3 siempre incluyen verduras en sus comidas, lo cual puede parecer contraintuitivo
+
+```{r}
+df |> 
+  mutate(TUE = round(TUE)) |> 
+  ggplot() +
+  geom_mosaic(aes(x = product(NObeyesdad, TUE), fill = NObeyesdad)) +
+  labs(title = "Relación entre tiempo de uso de dispositivos tecnologicos
+       y categoria de obesidad") +
+  theme_bw()
+```
+
+
 ```{r}
 table(df$NObeyesdad, df$SMOKE) |> addmargins() |> kable()
 
-df |> ggplot(aes(x = SMOKE, fill = NObeyesdad)) +
+df |> 
+  ggplot(aes(x = SMOKE, fill = NObeyesdad)) +
   geom_bar(position = "fill") +
   labs(
     title = "Gráfico de la tabla de contingencia",
@@ -235,34 +278,6 @@ El árbol de decisión obtuvo una accuracy de 0,62, menor al del Random Forest. 
 
 En cuanto a las variables más relevantes, el árbol de decisión toma el consumo de vegetables, el comer algo entre comidas, el género y la edad, lo cual no coincide perectamente con lo visto en el Random Forest.
 
-```{r}
- df |> ggplot() +
-  geom_density(aes(x = Age, fill = NObeyesdad)) +
-  theme_bw() + 
-  theme(legend.position = "none") +
-  facet_wrap(~NObeyesdad)
-```
-
-En este gráfico podemos observar las edades de las personas en las distintas categorías de índice de masa corporal.En las categorías de IMC más bajas se puede observar que que la mayoría de las personas de dichas categorías son de edad más baja que en las categorías de obesidad, donde se puede observar que hay más personas cerca de los 30 o 40 años.
-
-```{r}
-df |> 
-  ggplot() +
-  geom_bar(aes(x = round(FCVC), fill = NObeyesdad), position = "dodge") +
-  theme_bw()
-```
-
-En esta gráfica podemos observar la cantidad de personas de las distintas categorías en función de con cuanta frecuencia suelen incluir vegetales en sus comidas, siendo 1 ¨Nunca¨ , 2 ¨A veces¨ y 3 ¨Siempre¨, donde observamos que la mayoria de las personas consume verduras en sus comidas aunque sea a veces, y que las personas con obesidad tipo 3 siempre incluyen verduras en sus comidas, lo cual puede parecer contraintuitivo
-
-```{r}
-table(df$NObeyesdad, df$Gender) |> addmargins() 
-df |> 
-  ggplot() +
-  geom_bar(aes(y = NObeyesdad, fill = Gender), position = "dodge") +
-  theme_bw()
-```
-
-En esta gràfica se observa la clasificaciòn por gèneros de las distintas categorìas estudiadas
 
 ```{r}
 set.seed(1)
