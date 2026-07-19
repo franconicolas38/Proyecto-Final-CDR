@@ -120,12 +120,18 @@ ui = navbarPage(
   ),
   
   tabPanel("Calculadora IMC",
-           br(),
-           numericInput("peso", "Peso (kg):", value = 70, min = 1, max = 300),
-           numericInput("altura", "Altura (m):", value = 1.70, min = 0.5, max = 2.5, step = 0.01),
-           h3("Resultado:"),
-           textOutput("resultado_imc"),
-           textOutput("categoria_imc"))
+           sidebarLayout(
+             sidebarPanel(numericInput("peso", "Peso (kg):", value = 70, min = 1, max = 300),
+                          numericInput("altura", "Altura (m):", value = 1.70, min = 0.5, max = 2.5, step = 0.01)
+               
+             ),
+             mainPanel(h3("Resultado:"),
+                       textOutput("resultado_imc"),
+                       textOutput("categoria_imc"),
+                       plotOutput("plot_imc"))
+
+            )
+  )
 )
 
 server = function(input, output) {
@@ -284,6 +290,14 @@ server = function(input, output) {
       TRUE ~ "Obesity_Type_III (Obesidad Tipo 3 o mórbida)"
     )
     paste("Categoría:", categoria)
+  })
+  
+  output$plot_imc = renderPlot({
+    ggplot(datos_filtrados_exp()) +
+      geom_point(aes(x = Weight, y = Height, color = NObeyesdad)) +
+      geom_vline(xintercept = input$peso) +
+      geom_hline(yintercept = input$altura) +
+      theme_minimal(base_size = 16)
   })
 }
 
