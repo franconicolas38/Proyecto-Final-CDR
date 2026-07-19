@@ -1,6 +1,7 @@
 library(shiny)
 library(readr)
 library(tidyverse)
+library(knitr)
 library(DT)
 
 df <- read_csv("ObesityDataSet_raw_and_data_sinthetic.csv")
@@ -93,17 +94,20 @@ ui = navbarPage(
                tabsetPanel(
                  id = "tabs",
                  tabPanel("Gráfico",
-                          radioButtons("segun_categoria", "Elegir si colorear por categoria",
-                                       choices = c("General" = "gral",
-                                                   "Coloreado" = "col"),
-                                       selected = "gral"),
                           conditionalPanel(
-                            condition = "input.tipo_grafico == 'num' && input.segun_categoria == 'col'",
+                            condition = "input.tipo_grafico != '2cat'",
+                            radioButtons("coloreado", "Coloreado",
+                                       choices = c("Normal" = "gral",
+                                                   "Por categoria" = "col"),
+                                       selected = "gral")
+                            ),
+                          conditionalPanel(
+                            condition = "(input.tipo_grafico == 'num' || input.tipo_grafico == '2num') && input.coloreado == 'col'",
                             sliderInput("alpha", "Transparencia:", min = 0.1, max = 1, value = 0.8)
                           ),
                           conditionalPanel(
-                            condition = "input.tipo_grafico == 'cat' && input.segun_categoria == 'col'",
-                            radioButtons("eje_y", "Elegir variable del eje y",
+                            condition = "input.tipo_grafico == 'cat' && input.coloreado == 'col'",
+                            radioButtons("eje_y", "Variable del eje y",
                                          choices = c("Cantidad" = "cant",
                                                      "Proporción" = "prop"),
                                          selected = "cant")
@@ -139,28 +143,28 @@ server = function(input, output) {
   output$bar = renderPlot({
     
     if (input$tipo_grafico == "num") { # Elige variable númerica
-      if (input$segun_categoria == "gral") { # y elige colorear general
+      if (input$coloreado == "gral") { # y elige colorear general
         
           ggplot(datos_filtrados_exp(),
                aes(x = .data[[input$var_num]])) +
           geom_density() +
-          theme_minimal() +
+          theme_minimal(base_size = 20) +
           theme(legend.position = "none")
       } else {                           # o elige colorear por NObeyesdad
           ggplot(datos_filtrados_exp(),
                aes(x = .data[[input$var_num]], fill = NObeyesdad)) +
           geom_density(alpha = input$alpha) +
-          theme_minimal()
+          theme_minimal(base_size = 16)
       }
     } else if (input$tipo_grafico == "cat") { # Elige variable categorica
       
-      if (input$segun_categoria == "gral") { # y elige colorear general
+      if (input$coloreado == "gral") { # y elige colorear general
         
           ggplot(datos_filtrados_exp(),
                aes(x = .data[[input$var_cat]], fill = .data[[input$var_cat]])) +
           geom_bar() +
           labs(y = "Cantidad") +
-          theme_minimal() + 
+          theme_minimal(base_size = 20) + 
           theme(legend.position = "none")
       } else {                             # o elige colorar por NObeyesdad
           if (input$eje_y == "cant") {        # y elige se vean las cantidad
@@ -168,33 +172,48 @@ server = function(input, output) {
                    aes(x = .data[[input$var_cat]], fill = NObeyesdad)) +
               geom_bar() +
               labs(y = "Cantidad") +
-              theme_minimal()
+              theme_minimal(base_size = 16)
           } else {                            # o que se vean las proporciones
               ggplot(datos_filtrados_exp(),
                    aes(x = .data[[input$var_cat]], fill = NObeyesdad)) +
               geom_bar(position = "fill") +
               labs(y = "Proporción") +
-              theme_minimal()
+              theme_minimal(base_size = 16)
           }
       }
     } else if (input$tipo_grafico == "2num") { # Elige dos variables numericas
-        
+          
+        if (input$coloreado == "gral") { # y elige colorear general
+          ggplot(datos_filtrados_exp(),
+                 aes(x = .data[[input$var_num1]], y = .data[[input$var_num2]])) +
+            geom_point() +
+            theme_minimal(base_size = 16)
+      } else {                           # o elige colorear por NObeyesdad
         ggplot(datos_filtrados_exp(),
                aes(x = .data[[input$var_num1]], y = .data[[input$var_num2]])) +
-        geom_point() +
-        theme_minimal()
-    
+          geom_point(aes(color = NObeyesdad), alpha = input$alpha) +
+          theme_minimal(base_size = 16)
+      }
     } else if (input$tipo_grafico == "2cat") { # Elige dos variables categoricas
         ggplot(datos_filtrados_exp(),
            aes(x = .data[[input$var_cat1]], fill = .data[[input$var_cat2]])) +
         geom_bar(position = "dodge") +
-        theme_minimal()
+        labs(y = "Cantidad") +
+        theme_minimal(base_size = 20)
     
     } else if (input$tipo_grafico == "cruzado") { # Elige una numerica y una categorica
-      ggplot(datos_filtrados_exp(),
-             aes(x = .data[[input$var_cat_c]], y = .data[[input$var_num_c]])) +
-        geom_boxplot() +
-        theme_minimal()
+        if (input$coloreado == "gral") {          # y elige colorear normal
+            ggplot(datos_filtrados_exp(),
+                 aes(x = .data[[input$var_cat_c]], y = .data[[input$var_num_c]])) +
+            geom_boxplot(aes(fill = .data[[input$var_cat_c]])) +
+            theme_minimal(base_size = 20) +
+            theme(legend.position = "none")
+        } else {                                   # o elige colorear por NObeyesdad
+            ggplot(datos_filtrados_exp(),
+                 aes(x = .data[[input$var_cat_c]], y = .data[[input$var_num_c]])) +
+            geom_boxplot(aes(fill = NObeyesdad)) +
+            theme_minimal(base_size = 16)
+        }
     } 
   })
   
@@ -205,19 +224,38 @@ server = function(input, output) {
       summary(datos[[input$var_num]])
     
     } else if (input$tipo_grafico == "cat") {
-        addmargins(table(datos$NObeyesdad, datos[[input$var_cat]]))
+        if (input$coloreado == "gral") {
+          table(datos[[input$var_cat]]) |> addmargins()
+        
+        } else {
+          addmargins(table(datos$NObeyesdad, datos[[input$var_cat]]))
+        }
     
     } else if (input$tipo_grafico == "2num") {
-        cov(datos[[input$var_num1]], datos[[input$var_num2]])
-        cor(datos[[input$var_num1]], datos[[input$var_num2]])
+        data.frame(Covarianza = cov(datos[[input$var_num1]], datos[[input$var_num2]]),
+                   Correlacion = cor(datos[[input$var_num1]], datos[[input$var_num2]])) 
+        
     
     } else if (input$tipo_grafico == "2cat") {
         table(datos[[input$var_cat1]], datos[[input$var_cat2]]) |> addmargins()
     
     } else if (input$tipo_grafico == "cruzado") {
-      tapply(datos[[input$var_num_c]],
-             datos[[input$var_cat_c]],
-             summary)
+        if (input$coloreado == "gral") {
+          tapply(datos[[input$var_num_c]],
+                 datos[[input$var_cat_c]],
+                 summary)
+      
+        } else {
+          aggregate(datos[[input$var_num_c]],
+                    by = list(Categoria = datos[[input$var_cat_c]],
+                              NObeyesdad = datos$NObeyesdad),
+                    FUN = function(x) c(Min = min(x),
+                                        Q1 = quantile(x, 0.25),
+                                        Mediana = median(x),
+                                        Media = mean(x),
+                                        Q3 = quantile(x, 0.75),
+                                        Max = max(x)))
+        }
     }
   })
   
