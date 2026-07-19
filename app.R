@@ -2,6 +2,7 @@ library(shiny)
 library(readr)
 library(tidyverse)
 library(knitr)
+library(plotly)
 library(DT)
 
 df <- read_csv("ObesityDataSet_raw_and_data_sinthetic.csv")
@@ -82,7 +83,7 @@ ui = navbarPage(
                conditionalPanel(
                  condition = "input.tipo_grafico == 'cruzado'",
                  selectInput("var_num_c", "Variable númerica:", choices = variables_numericas),
-                 selectInput("var_cat_c", "Variable categórica:", choices = variables_factor)
+                 selectInput("var_cat_c", "Variable categórica:", choices = variables_factor[-length(variables_factor)])
                ),
 
                checkboxGroupInput("NObeyesdad_exp", "Categoría",
@@ -113,7 +114,9 @@ ui = navbarPage(
                                          selected = "cant")
                           ),
                           plotOutput("bar")),
-                 tabPanel("Resumen", verbatimTextOutput("resumen"))
+                 tabPanel("Resumen",
+                          uiOutput("titulo_resumen"),
+                          verbatimTextOutput("resumen"))
                )
              )
            )
@@ -125,10 +128,10 @@ ui = navbarPage(
                           numericInput("altura", "Altura (m):", value = 1.70, min = 0.5, max = 2.5, step = 0.01)
                
              ),
-             mainPanel(h3("Resultado:"),
-                       textOutput("resultado_imc"),
-                       textOutput("categoria_imc"),
-                       plotOutput("plot_imc"))
+             mainPanel(h2("Resultado:"),
+                       h4(textOutput("resultado_imc")),
+                       h4(textOutput("categoria_imc")),
+                       plotlyOutput("plot_imc"))
 
             )
   )
@@ -223,12 +226,64 @@ server = function(input, output) {
     } 
   })
   
+  output$titulo_resumen = renderUI({
+    
+    texto = if (input$tipo_grafico == "num") {
+      paste("Medidas de resumen de", input$var_num)
+      
+    } else if (input$tipo_grafico == "cat") {
+      if (input$coloreado == "gral") {
+        paste("Frecuencias de", input$var_cat)
+      } else {
+        paste("Tabla de contingencia de", input$var_cat, "con Nivel de Obesidad")
+      }
+      
+    } else if (input$tipo_grafico == "2num") {
+      paste("Covarianza y correlación entre", input$var_num1, "y", input$var_num2)
+      
+    } else if (input$tipo_grafico == "2cat") {
+      paste("Tabla de contingencia de", input$var_cat1, "con", input$var_cat2)
+      
+    } else if (input$tipo_grafico == "cruzado") {
+      if (input$coloreado == "gral") {
+        paste("Resumen de", input$var_num_c, "según", input$var_cat_c)
+      } else {
+        paste("Resumen de", input$var_num_c, "según", input$var_cat_c, "y Nivel de Obesidad")
+      }
+    }
+    
+    h4(texto)
+  })
+  
   output$resumen = renderPrint({
     datos = datos_filtrados_exp()
     
     if (input$tipo_grafico == "num") {
-      summary(datos[[input$var_num]])
-    
+      x = datos[[input$var_num]]
+      if (input$coloreado == "gral") {
+        data.frame(
+          Min = round(min(x), 2),
+          Q1 = round(quantile(x, 0.25), 2),
+          Mediana = round(median(x), 2),
+          Media = round(mean(x), 2),
+          Q3 = round(quantile(x, 0.75), 2),
+          Max = round(max(x), 2),
+          Varianza = round(var(x), 2),
+          Desvio = round(sd(x), 2),
+          row.names = NULL
+        )
+      
+      } else {
+        datos |> group_by(NObeyesdad) |> 
+          summarise(Min = round(min(.data[[input$var_num]]), 2),
+                    Q1 = round(quantile(.data[[input$var_num]], 0.25), 2),
+                    Mediana = round(median(.data[[input$var_num]]), 2),
+                    Media = round(mean(.data[[input$var_num]]), 2),
+                    Q3 = round(quantile(.data[[input$var_num]], 0.75), 2),
+                    Max = round(max(.data[[input$var_num]]), 2),
+                    Varianza = round(var(.data[[input$var_num]]), 2),
+                    Desvio = round(sd(.data[[input$var_num]]), 2))
+      }
     } else if (input$tipo_grafico == "cat") {
         if (input$coloreado == "gral") {
           table(datos[[input$var_cat]]) |> addmargins()
@@ -247,20 +302,33 @@ server = function(input, output) {
     
     } else if (input$tipo_grafico == "cruzado") {
         if (input$coloreado == "gral") {
-          tapply(datos[[input$var_num_c]],
-                 datos[[input$var_cat_c]],
-                 summary)
+          datos |>
+            group_by(.data[[input$var_cat_c]]) |>
+            summarise(
+              Min = round(min(.data[[input$var_num_c]]), 2),
+              Q1 = round(quantile(.data[[input$var_num_c]], 0.25), 2),
+              Mediana = round(median(.data[[input$var_num_c]]), 2),
+              Media = round(mean(.data[[input$var_num_c]]), 2),
+              Q3 = round(quantile(.data[[input$var_num_c]], 0.75), 2),
+              Max = round(max(.data[[input$var_num_c]]), 2),
+              Varianza = round(var(.data[[input$var_num_c]]), 2),
+              Desvio = round(sd(.data[[input$var_num_c]]), 2)
+            )
       
         } else {
-          aggregate(datos[[input$var_num_c]],
-                    by = list(Categoria = datos[[input$var_cat_c]],
-                              NObeyesdad = datos$NObeyesdad),
-                    FUN = function(x) c(Min = min(x),
-                                        Q1 = quantile(x, 0.25),
-                                        Mediana = median(x),
-                                        Media = mean(x),
-                                        Q3 = quantile(x, 0.75),
-                                        Max = max(x)))
+          datos |>
+            group_by(.data[[input$var_cat_c]], NObeyesdad) |>
+            summarise(
+              Min = round(min(.data[[input$var_num_c]]), 2),
+              Q1 = round(quantile(.data[[input$var_num_c]], 0.25), 2),
+              Mediana = round(median(.data[[input$var_num_c]]), 2),
+              Media = round(mean(.data[[input$var_num_c]]), 2),
+              Q3 = round(quantile(.data[[input$var_num_c]], 0.75), 2),
+              Max = round(max(.data[[input$var_num_c]]), 2),
+              Varianza = round(var(.data[[input$var_num_c]]), 2),
+              Desvio = round(sd(.data[[input$var_num_c]]), 2),
+              .groups = "drop"
+            )
         }
     }
   })
@@ -292,12 +360,14 @@ server = function(input, output) {
     paste("Categoría:", categoria)
   })
   
-  output$plot_imc = renderPlot({
-    ggplot(datos_filtrados_exp()) +
+  output$plot_imc = renderPlotly({
+    grafico = ggplot(datos_filtrados_exp()) +
       geom_point(aes(x = Weight, y = Height, color = NObeyesdad)) +
       geom_vline(xintercept = input$peso) +
       geom_hline(yintercept = input$altura) +
-      theme_minimal(base_size = 16)
+      theme_minimal(base_size = 12) 
+    
+    ggplotly(grafico)
   })
 }
 
