@@ -399,7 +399,7 @@ Exploratorio: Posibilita visualizar en gráficos y tablas relación entre variab
 Calculadora IMC: Permite ingresar peso y altura e indica el IMC y categoría correspondiente.
 Modelo predictivo: Predice el nivel de obesidad con las respuestas que se ingresen. Se utiliza el segundo Random Forest realizado.
 
-Enlace de la aplicación:  https://emilianosantesevan.shinyapps.io/shiny-proyecto/
+Enlace de la aplicación:  <https://emilianosantesevan.shinyapps.io/shiny-proyecto/>
 
 ## Conclusiones
 
