@@ -1,21 +1,47 @@
 ---
 title: "Proyecto final Ciencia de Datos con R 2026"
 subtitle: "Estudio a partir de variables que afectan el peso de las personas"
-format: html
-author: Franco Purtscher, Emiliano Santestevan, Ignacio Tarigo
+author: "Franco Purtscher, Emiliano Santestevan, Ignacio Tarigo"
+lang: es
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-title: "Índice"
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    number-depth: 3
+    fig-cap-location: bottom
+    tbl-cap-location: top
+    code-fold: true
+    code-summary: "Mostrar código"
+    embed-resources: true
+    mainfont: "Times New Roman"
+    include-in-header:
+      text: |
+        <style>
+        body {
+          text-align: justify;
+        }
+        h1, h2, h3, h4, h5, h6, .title, .subtitle {
+          text-align: left;
+        }
+        h2, h3, h4 {
+          text-decoration: underline;
+        }
+        </style>
 editor: visual
-embed-resources: true
 echo: false
 warning: false
-mainfont: "Georgia"       
+message: false      
 ---
 
-## **Introducción:**
+## Introducción:
 
-Para este proyecto, seleccionamos una base de datos extraída de UCI Machine Learning, con la cual intentaremos explicar el nivel de obesidad de un individuo, basandonos en hábitos alimenticios, condición física, historial familiar, y demás variables. Para ello, realizaremos distintos gráficos, tablas, medidas de resumen y modelos de machine learning como árbol de decisión o Random Forest para intentar predecir la categoría de una persona en base a lo dicho anteriormente. Finalmente, crearemos una Shiny basada en el dataset y en el problema de interés. 
-Creemos que es un fenómeno interesante de abordar, debido a que determinados niveles de obesidad pueden llegar a ser perjudiciales para la salud de una persona. A través de este análisis intentaremos conocer ciertos motivos o patrones que podrían permitir la detección o la prevención de ese riesgo.
+Para este proyecto, seleccionamos una base de datos extraída de UCI Machine Learning, con la cual intentaremos explicar el nivel de obesidad de un individuo, basandonos en hábitos alimenticios, condición física, historial familiar, y demás variables. Para ello, realizaremos distintos gráficos, tablas, medidas de resumen y modelos de machine learning como árbol de decisión o Random Forest para intentar predecir la categoría de una persona en base a lo dicho anteriormente. Finalmente, crearemos una Shiny, para tener una visualización más interactiva sobre este análisis. Creemos que es un fenómeno interesante de abordar, debido a que determinados niveles de obesidad pueden llegar a ser perjudiciales para la salud de una persona. A través de este análisis intentaremos conocer ciertos motivos o patrones que podrían permitir la detección o la prevención de ese riesgo.
 
-## **Base de datos:**
+## Base de datos:
 
 La base de datos está basada en encuestas web a individuos de México, Perú y Colombia. El 23% de las observaciones se recopilaron directamente desde las encuestas mientras que el 77% fueron creados sinteticamente utilizando la herramienta Woka y el filtro SMOTE, con el fin de equiparar la cantidad de datos en cada categoría y así los distintos algoritmos que se pueden llegar a utilizar con el dataframe funcionen de una mejor manera.
 
@@ -40,7 +66,7 @@ donde $$\text{IMC} = \frac{\text{Peso (kg)}}{\text{Estatura (m)}^2}$$
 Cada una de las variables refiere a una pregunta:
 
 | Preguntas | Posibles respuestas |
-|----------------------------------|-------------------------------------|
+|-----------------------------------|-------------------------------------|
 | ¿Cuál es tu género? “Gender” | • Femenino • Masculino |
 | ¿Cuál es tu edad? “Age” | Valor numérico |
 | ¿Cuál es tu altura? “Height” | Valor numérico en metros |
@@ -81,7 +107,7 @@ df =
                                    ordered = TRUE))
 ```
 
-### Primera descripción de las variables
+### Primera descripción de las variables:
 
 ```{r}
 glimpse(df)
@@ -89,12 +115,11 @@ set.seed(1)
 slice_sample(df, n = 10) |> kable()
 ```
 
-El glimpse del dataset nos indica que este cuenta con 2111 observaciones y 17 variables. Podemos observar que de las 17 variables, tenemos 8 que son númericas, pero 5 de ellas, son realmente distintas opciones de las posibles respuestas a las preguntas, por lo que en realidad se deben tratar como un factor. Por ejemplo, en la variable TUE, el valor 0 indica "0-2 horas", el valor 1 indica "3-5 horas" y el valor 2 indica "más de 5 horas". Lo mismo ocure con las variables FCVC, NCP, CH2O y FAF.
-Sin embargo, en algunas de las 10 observaciones que se eligieron al azar, se ve como los valores de estas variables recien nombradas, no son números enteros, sino que tienen decimales. Esto se debe a que los algoritmos utilizados para generar los datos sinteticos, no reconoció que esas variables eran números enteros y creó observaciones con números decimales, lo cual, en la realidad,  no tiene sentido. Para la realización de gráficos redondearemos esas variables.
+El glimpse del dataset nos indica que este cuenta con 2111 observaciones y 17 variables. Podemos observar que de las 17 variables, tenemos 8 que son númericas, pero 5 de ellas, son realmente distintas opciones de las posibles respuestas a las preguntas, por lo que en realidad se deben tratar como un factor. Por ejemplo, en la variable TUE, el valor 0 indica "0-2 horas", el valor 1 indica "3-5 horas" y el valor 2 indica "más de 5 horas". Lo mismo ocure con las variables FCVC, NCP, CH2O y FAF. Sin embargo, en algunas de las 10 observaciones que se eligieron al azar, se ve como los valores de estas variables recien nombradas, no son números enteros, sino que tienen decimales. Esto se debe a que los algoritmos utilizados para generar los datos sinteticos, no reconoció que esas variables eran números enteros y creó observaciones con números decimales, lo cual, en la realidad, no tiene sentido. Para la realización de gráficos redondearemos esas variables.
 
-### Distribución de la variable respuesta
+### Distribución de la variable respuesta:
 
-#### Cantidad de obervaciones
+#### Cantidad de obervaciones:
 
 ```{r}
 df |> 
@@ -106,7 +131,7 @@ df |>
 
 En el gráfico de barras, podemos observar la creación de datos sintéticos antes mencionada, para intentar poseer una cantidad similar de datos en cada categoría. Viendo unicamente una mayor diferencia entre Obesity_Type_I e Insufficient_Weight, pero sin ser significativa.
 
-#### Relación entre peso y altura
+#### Relación entre peso y altura:
 
 ```{r}
 df |> 
@@ -118,7 +143,7 @@ df |>
 
 En gráfico de puntos, se observa claramente la distinció y categorización de las individuos según la relación entre peso y altura (IMC). Además, se puede ver una baja relación positiva entre peso y altura.
 
-#### Distribución etaria
+#### Distribución etaria:
 
 ```{r}
 df |> ggplot() +
@@ -136,9 +161,9 @@ df |>
             Desvio = round(sd(Age),2)) |> kable()
 ```
 
-En el gráfico de densidad y en las tablas, podemos observar claramente una asimetría a la derecha de la edad, puesto que el 75% de los datos tienen menos de 26 años, y sin embargo mayor edad observada es de 61 años. Además, si observamos las clases por separado, vemos como este 25% de los datos con mayor edad, se encuentra en las categorias de en medio, mientras que los más jovenes están más concentrados en las primeras tres categorías y en la última. Aunque cabe mencionar las altas concentraciones de Insufficient_Weight entre los 16 y 23 años aproximadamente, y de Obesity_Type_III, con dos modas y una muy marcada alrededor de los 26 años.
+En el gráfico de densidad y en las tablas, podemos observar claramente una asimetría a la derecha de la edad, puesto que el 75% de los datos tienen menos de 26 años, y sin embargo mayor edad observada es de 61 años. Además, si observamos las clases por separado, vemos como este 25% de los datos con mayor edad, se encuentra en las categorias de en medio, mientras que los más jovenes están más concentrados en las primeras tres categorías y en la última. Destacar también las altas concentraciones de Insufficient_Weight entre los 16 y 23 años aproximadamente, y de Obesity_Type_III, con dos modas y una muy marcada alrededor de los 26 años. Sin embargo, en especial la distribución de Obesity_Type_III, donde gran cantidad de observaciones tienen 26 años y practicamente ninguna tiene entre 28 y 30, es muy poco probable que represente la realidad, y se obtiene gracias a la producción de datos sintéticos en el dataset antes nombrados.
 
-#### Composición por género
+#### Composición por género:
 
 ```{r}
 df |> 
@@ -149,11 +174,13 @@ df |>
 table(df$NObeyesdad, df$Gender) |> addmargins() |> kable()
 ```
 
-En el diagrama de barras y en la tabla de contingencia, podemos observar como hay algunas categorias donde la cantidad de hombres y mujeres es parecida, pero en otras se ven mayores diferencias, en especial en Obesity_Type_II, donde solamente tenemos dos observaciones de mujeres y en Obesity_Type_III, tenemos unicamente un individuo hombre. Estas diferencias no parecen ser derivadas de la realidad, con lo que muy probablemente sean producto de los algoritmos utilizados para la creación de datos sintéticos.
-
-
+En el diagrama de barras y en la tabla de contingencia, podemos observar como hay algunas categorias donde la cantidad de hombres y mujeres es parecida, pero en otras se ven mayores diferencias, en especial en Obesity_Type_II, donde solamente tenemos dos observaciones de mujeres y en Obesity_Type_III, tenemos unicamente un individuo hombre. Al igual que en la edad, estas diferencias no parecen ser derivadas de la realidad, con lo que muy probablemente sean producto de los algoritmos utilizados para la creación de datos sintéticos.
 
 ## Análisis exploratorio:
+
+En este análisis exploratorio de la base de datos, iremos comparando y observando el comportamiento determinadas variables, con respecto a la variable objetivo (NObeyesdad). Las variables dependientes que escogeremos, son aquellas que creeemos que pueden ser significativas o explicativas del problema de interés.
+
+#### ¿Afecta el historial familiar en el nivel de obesidad de una persona?
 
 ```{r}
 df |> 
@@ -165,7 +192,9 @@ df |>
   theme_bw()
 ```
 
-Aca logramos ver una gran tendencia, dado que tener un historial familiar con sobrepeso lleva a una mayor porbabilidad de poseerlo también. Se ve como ya en los niveles de obesidad tipo 2 y 3 únicamente hay personas con historial de sobrepeso en su familia.
+En este diagrama de barras, que relaciona el historial familar de sobrepeso de una persona con las categorias de obesidad, logramos ver una gran tendencia, dado que tener un historial familiar con sobrepeso lleva a una mayor probabilidad de poseerlo también. Se ve como ya en los niveles de obesidad tipo 2 y 3 únicamente hay personas con historial de sobrepeso en su familia. Con lo que, podemos concluir, que una persona sin historial de sobrepeso, es muy dificil que tenga altos niveles de sobrepeso.
+
+#### ¿La actividad física explica los niveles de obesidad?
 
 ```{r}
 df |> 
@@ -178,7 +207,9 @@ df |>
   theme_bw()
 ```
 
-En el gráfico de barras podemos observar una asimetría hacia la derecha, es decir, la moda de la districibución se encuentra en el nivel 1 (actividad física 1 o 2 días por semana), y a mayor nivel de actividad física, menor cantidad de personas. A su vez, vemos que esta simetría se acentua más, o directamente hay una relación negativa en las categorías de mayor sobrepeso.
+En el gráfico de barras, que muestra la cantidad de personas de cada categoría y en general, para cada nivel de actividad física, donde 0 significa "No tengo" o no realiza, el 1 significa "1 o 2 días", el 2 "2 o 4 días" y el 3 "4 o 5 días", podemos observar una asimetría hacia la derecha, es decir, la moda de la districibución se encuentra en el nivel 1 (actividad física 1 o 2 días por semana), y a mayor nivel de actividad física, menor cantidad de personas. A su vez, vemos que esta simetría se acentua más, o directamente hay una relación negativa en las categorías de mayor sobrepeso, es decir, las personas con mayor sobrepeso están concentranas en los niveles más bajos. En primer lugar, podemos concluir que un gran porcentaje de las personas realizan activdad actividad física dos o menos días a la semana. Con respecto a los niveles de obesidad, además de lo expresado anteriormente, podriamos destacar el mayor porcentaje de "Insufficient_Weight" se encuentra en el nivel 2, mientras que la menor proporción, y con gran diferencia, se encuentra en el nivel siguiente 3.
+
+#### ¿Se puede explicar el nivel de obesidad por la frecuencia de consumo de vegetales?
 
 ```{r}
 df |> 
@@ -187,7 +218,9 @@ df |>
   theme_bw() + labs(title = "Consumo de vegetales por categoria")
 ```
 
-En esta gráfica podemos observar la cantidad de personas de las distintas categorías en función de con cuanta frecuencia suelen incluir vegetales en sus comidas, siendo 1 ¨Nunca¨ , 2 ¨A veces¨ y 3 ¨Siempre¨, donde observamos que la mayoria de las personas consume verduras en sus comidas aunque sea a veces, y que las personas con obesidad tipo 3 siempre incluyen verduras en sus comidas, lo cual puede parecer contraintuitivo
+En esta gráfica podemos observar la cantidad de personas de las distintas categorías en función de con cuanta frecuencia suelen incluir vegetales en sus comidas, siendo 1 ¨Nunca¨ , 2 ¨A veces¨ y 3 ¨Siempre¨, donde observamos que la gran mayoria de las personas consume verduras en sus comidas aunque sea a veces, y que todas las personas con obesidad tipo 3 siempre incluyen verduras en sus comidas. Tambien destacar la relación positiva de "Insufficient_Weight", siendo junto a "Obesity_Type_III", las únicas dos categorias con mayor proporción en el nivel 3.
+
+#### ¿Qué relación hay entre el tiempo de uso de dispositivos tecnologicos y los niveles de obesidad?
 
 ```{r}
 df |> 
@@ -199,6 +232,10 @@ df |>
   theme_bw()
 ```
 
+En el gráfico de mosaico, donde 0 es "0–2 horas", 1 "3–5 horas" y 2 "Más de 5 horas", se observa como la gran mayoría de las personas se encuentra en los niveles 0 y 1. Además podemos notar que el nivel 0 es el más equilibrado, siendo "Insufficient_Weight" y "Obesity_Type_III" los de menor proporción. También, cabe descatar que la mayor categoría de obesidad predomina en el nivel 1 y en el nivel 2 casi no tiene observaciones. Por lo que, podriamos concluir que no existe una relación lineal entre estas variables.
+
+#### ¿Fumar influye en el nivel de obesidad de una persona?
+
 ```{r}
 table(df$NObeyesdad, df$SMOKE) |> addmargins() |> kable()
 
@@ -206,7 +243,7 @@ df |>
   ggplot(aes(x = SMOKE, fill = NObeyesdad)) +
   geom_bar(position = "fill") +
   labs(
-    title = "Gráfico de la tabla de contingencia",
+    title = "Relación en proporciones entre SMOKE y NObeyesdad",
     x = "Fumador",
     y = "Frecuencia",
     fill = "Nivel de obesidad"
@@ -214,12 +251,15 @@ df |>
   theme_minimal()
 ```
 
-Aca logramos ver como dentro de los no fumadores, la frecuencia se distribuye practicamente igual para cada nivel de obesidad.En cambio, dentro de los fumadores se ve una alta frecuencia en los que tienen obesidad tipo 2 junto con lo que tienen un peso normal.
+Aca logramos ver como dentro de los no fumadores, la frecuencia se distribuye practicamente igual para cada nivel de obesidad. En cambio, dentro de los fumadores se ve una alta frecuencia en los que tienen obesidad tipo 2 junto con lo que tienen un peso normal y una muy baja en las dos categorias extremas, con solo una observación cada categoría. Esto nos indica que fumar esta asociado con niveles normales o de obesidad intermedios.
 
 ## Modelos de predicción:
 
 ### Random Forest:
 
+En primer lugar, realizamos un Random Forest, con el objetivo de predecir la variable "NObeyesdad". Sabemos que los valores de esta variable, son en realidad, los distintos posibles resultados del valor de IMC, que es una formula matemática que relaciona el peso y la altura, es decir, si se conoce el peso y la altura, automaticamente se conoce el valor de "NObeyesdad". Por ello, para que el modelo que base en el resto de las variables y no en una formula matemática, simplemente las quitamos del modelo. De lo contrario, el modelo captaria esa relación y no tendría en cuenta el resto de las variables, que son aquellas que realmente queremos que se utilizen como explicativas.
+
+[Resultados:]{.underline}
 ```{r}
 set.seed(1)
 split = initial_split(df, prop = 0.8, strata = NObeyesdad)
@@ -230,7 +270,7 @@ receta_rf <- recipe(NObeyesdad ~ ., data = train_df) |>
   step_rm(Weight, Height)
 
 rforest = 
-  rand_forest(min_n = 5) |> 
+  rand_forest(trees = 1000) |> 
   set_engine("ranger", importance = "impurity") |> 
   set_mode("classification") 
 
@@ -254,7 +294,7 @@ conf_mat(pred_rf, truth = NObeyesdad, estimate = .pred_class) |>
 
 ```
 
-En las métricas, una accuracy de 0,86 junto con valores similares de precision, recall y F1 indican que el modelo generaliza bien, sin señales de overfitting ni underffiting.
+En las métricas, una accuracy de casi 0,86 junto con valores similares de precision, recall y F1 indican que el modelo generaliza bien, sin señales de overfitting ni underffiting.
 
 En la matriz de confusión vemos que la mayor concentración de casos está sobre la diagonal, lo que muestra que el modelo tiene un buen desempeño. Los errores que sí aparecen se concentran mayormente entre categorías más similares (por ejemplo, confundir Overweight_Level_I con Overweight_Level_II, Obesity_Type_I con Obesity_Type_II). En cambio, no hay confusión entre categorías muy alejadas entre sí (como Insufficient_Weight y Obesity_Type_III). Lo que indica la mayor dificultad de distinguir el límite entre los tipos de sobrepeso y obesidad que entre las categorias
 
@@ -264,10 +304,52 @@ wf_rforest |>
   vip()
 ```
 
-El vip nos muestra que la edad, el consuma de vegetales y el tiepmo de uso de celular son las variables con mayor nivel predictivo del modelo, incluso más que las variables que nosotros pensamos en un inicio que serian las más determinantees (actividad fisica e historial familiar). Cabe aclarar que expcluimos el peso y la altura, ya que NObeyesdad se construye a partir de IMC (que depende unicamente de peso y altura), de no haberlo hecho estas habrían dominado el modelo en su totalidad.
+El vip nos muestra que la edad, el consuma de vegetales y el tiempo de uso de dispositivos electronicos son las variables con mayor nivel predictivo del modelo, incluso más que las variables que nosotros pensamos en un inicio que serian las más determinantes, que analizamos anteriomente (actividad fisica e historial familiar).
+
+Como se nombró anteriormente, el algoritimo de datos sintéticos creo algunos sesgos en las obsservaciones, que se vieron reflejadas en este modelo, donde la variable edad fue la más importante para determinar el nivel de obesidad de una persona, algo que parece muy poco intuitivo o razonable. 
+Por ello, realizamos otro modelo, donde además de dejar de lado el peso y la altura, también quitamos la variable "Age" y la variable "Gender", ambas ya analizadas y con resultados extraños y no completamente representativos de la realidad.
+
+[Resultados:]{.underline}
+```{r}
+receta_rf2 <- recipe(NObeyesdad ~ ., data = train_df) |> 
+  step_rm(Weight, Height, Age, Gender)
+
+rforest2 = 
+  rand_forest(trees = 1000) |> 
+  set_engine("ranger", importance = "impurity") |> 
+  set_mode("classification") 
+
+wf_rforest2 = 
+  workflow() |>
+  add_recipe(receta_rf2) |> 
+  add_model(rforest2) |> 
+  fit(data = train_df)
+```
+
+```{r}
+pred_rf2 <- predict(wf_rforest2, test_df, type = "class") |> 
+  bind_cols(test_df)
+
+metricas_rf <- metric_set(accuracy, precision, recall, f_meas)
+pred_rf2 |> metricas_rf(truth = NObeyesdad, estimate = .pred_class) |> kable()
+
+conf_mat(pred_rf2, truth = NObeyesdad, estimate = .pred_class) |>
+  autoplot(type = "heatmap") +
+  scale_fill_gradient(low = "white", high = "blue")
+
+
+extract_fit_engine(wf_rforest2) |> vip()
+```
+En este segundo Random Forest, como era esperable, tuvo un menor rendimiento, pero sigue siendo un buen modelo, con las cuatro metricas entre 0.79 y 0.80, que se ve reflejado en la matriz de confusión, donde gran parte de las observaciones se encuentran en la matriz diagonal. También se puede observar como las categorías donde tiene mayor precisión son las extremos y en las centrales, sobre todo los niveles de sobrepeso, es donde tiene mayores errores.
+
+En el gráfico vip, vemos como por una amplica diferencia la variable "FCVC" es la más importante para el modelo, y aparecen por detrás variables como "NCP" o "CH2O" que no las habiamos tenido en cuenta en un pricipio y el modelo les dio gran importancia, por encima de las que si creíamos que serian importantes.
 
 ### Árbol de decisión:
 
+Por último, para tener una comparación entre modelos y observas sus diferencias, realizamos un árbol de decisión. Es esperable que tenga un menor desempeño, pero nos ayuda en la interpretación del mismo y en el costo comptacional.
+Para el árbol si se utilizaron las variables edad y género.
+
+[Resultados:]{.underline}
 ```{r}
 rtree = decision_tree(min_n = 5) |> 
   set_engine("rpart") |> 
@@ -306,44 +388,21 @@ El árbol de decisión obtuvo una accuracy de 0,62, menor al del Random Forest. 
 
 En cuanto a las variables más relevantes, el árbol de decisión toma el consumo de vegetables, el comer algo entre comidas, el género y la edad, lo cual no coincide perectamente con lo visto en el Random Forest.
 
-```{r}
-set.seed(1)
-split = initial_split(df, prop = 0.8, strata = NObeyesdad)
-train_df = training(split)
-test_df = testing(split)
 
-receta_rf2 <- recipe(NObeyesdad ~ ., data = train_df) |> 
-  step_rm(Weight, Height, Age, Gender)
+## Aplicación Shiny
 
-rforest2 = 
-  rand_forest(trees = 1000) |> 
-  set_engine("ranger", importance = "impurity") |> 
-  set_mode("classification") 
+Como se describió en la introduccion, además de este análisis exploratorio, realizamos una aplicación Shiny basada en este trabajo, con el objetivo de tener una visualización más interactiva y la posibilidad de observar las relaciones entre cualesquiera de las variables del dataset.
+La aplicación cuenta con cuatro pestañas:
+Inicio: Introduce al visitante a la aplicación y al trabajo realizado.
+Base de datos: Muestra y explica el dataset.
+Exploratorio: Posibilita visualizar en gráficos y tablas relación entre variables.
+Calculadora IMC: Permite ingresar peso y altura e indica el IMC y categoría correspondiente.
+Modelo predictivo: Predice el nivel de obesidad con las respuestas que se ingresen. Se utiliza el segundo Random Forest realizado.
 
-wf_rforest2 = 
-  workflow() |>
-  add_recipe(receta_rf2) |> 
-  add_model(rforest2) |> 
-  fit(data = train_df)
-```
-
-```{r}
-pred_rf2 <- predict(wf_rforest2, test_df, type = "class") |> 
-  bind_cols(test_df)
-
-metricas_rf <- metric_set(accuracy, precision, recall, f_meas)
-pred_rf2 |> metricas_rf(truth = NObeyesdad, estimate = .pred_class) |> kable()
-
-conf_mat(pred_rf2, truth = NObeyesdad, estimate = .pred_class) |>
-  autoplot(type = "heatmap") +
-  scale_fill_gradient(low = "white", high = "blue")
-
-
-extract_fit_engine(wf_rforest2) |> vip()
-```
+Enlace de la aplicación: 
 
 ## Conclusiones
 
-En este proyecto buscabamos identificar las variables más relacionadas que permiten explicar y predecir el nivel de obesidad de las personas. El anális exploratorio mostro que el historial familiar de sobrepeso es uno de los factores más asociados a la variable respuesta, observandose que en los niveles más altos de obecidad practicamente todos presentan antecedentes familiares. También identificamos patrones relevantes en la actividad física, donde a mayor frecuencia semanal generalmente se asocia a menor peso, mientras que el consumo de vegetales no mostro una relación tan intuitiva como esperabamos.
+En este proyecto buscabamos identificar las variables más relacionadas que permiten explicar y predecir el nivel de obesidad de las personas. El análisis exploratorio mostro que el historial familiar de sobrepeso es uno de los factores más asociados a la variable respuesta, observandose que en los niveles más altos de obecidad practicamente todos presentan antecedentes familiares. También identificamos patrones relevantes en la actividad física, donde a mayor frecuencia semanal generalmente se asocia a menor peso, mientras que el consumo de vegetales mostró una relación que no esperabamos. Con los modelos, pudimos ratificar y tanto la actividad fisíca como el consumo de vegetales eran importantes, pero también aparecieron otras variables como la cantidad de comidad principales y el consumo de agua, que no creíamos que sería relevantes pero que en verdad si lo eran. El buen resultado de los modelos y del random forest en especial, nos muestra que existen ciertos patrones de conducta que pueden estar relacionados e implicados con el nivel de obesidad.
 
-En cuanto a los modelos de predicción, el Random Forest fue el que tuvo mejor desempeño, con una accuracy de 0.86 y métricas de precision, recall y F1 consistentes entre sí, lo que indica que funciona correctamente, sin señales de overfitting ni underfitting. El árbol de decisión, si bien tuvo un desempeño inferior (accuracy de 0.62), nos sirvio para la interpretación, permitiendonos ver cómo funciona el proceso de decisión del modelo, algo que el Random Forest no nos permite ver.
+Como posible lineas de trabajo futuras, sería, en primer lugar, obtener una base lo suficientemente grande de encuestas reales para evitar problemas o inconvenientes y detalles que se deben tener en cuenta con el uso de datos sintéticos. Además también se podrían obtener otras variables númericas, que permitan el uso de otras herramientas a la hora de analizarlas, ya que gran parte de las variables que utilizamos eran variables factorizadas.
