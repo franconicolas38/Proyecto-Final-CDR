@@ -1,6 +1,7 @@
 library(shiny)
 library(readr)
 library(tidyverse)
+library(tidymodels)
 library(knitr)
 library(plotly)
 library(DT)
@@ -63,7 +64,7 @@ ui = navbarPage(
   tabPanel("Inicio",
            h2("Proyecto final de Ciencia de Datos con R 2026", 
               style = "font-weight: bold; text-decoration: underline;"),
-           h4("Franco Purtscher, Emiliano Santestevan, Ignacio Tarigo")
+           h4("Franco Purtscher, Emiliano Santestevan, Ignacio Tarigo"),
            wellPanel(
              h3("Descripción del proyecto"),
              p("Esta Shiny está basada en una base de datos extraída de UCI Machine Learning,
