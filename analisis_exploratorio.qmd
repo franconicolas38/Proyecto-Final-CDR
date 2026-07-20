@@ -1,7 +1,8 @@
 ---
-title: "Proyecto_final_cdr"
+title: "Proyecto final Ciencia de Datos con R 2026"
 subtitle: "Estudio a partir de variables que afectan el peso de las personas"
 format: html
+author: Franco Purtscher, Emiliano Santestevan, Ignacio Tarigo
 editor: visual
 embed-resources: true
 echo: false
@@ -9,36 +10,37 @@ warning: false
 mainfont: "Georgia"       
 ---
 
-## Introducción:
+## **Introducción:**
 
-Para este proyecto, seleccionamos una base de datos extraída de UCI Machine Learning, donde se intentará encontrar cómo distinas variables relacionadas a habitos alimenticios y condición física, pueden llegar a explicar el nivel de obesidad de una persona (NObeyesdad) . Para ello, realizaremos distintos gráficos, tablas y modelos de machine learning.
+Para este proyecto, seleccionamos una base de datos extraída de UCI Machine Learning, con la cual intentaremos explicar el nivel de obesidad de un individuo, basandonos en hábitos alimenticios, condición física, historial familiar, y demás variables. Para ello, realizaremos distintos gráficos, tablas, medidas de resumen y modelos de machine learning como árbol de decisión o Random Forest para intentar predecir la categoría de una persona en base a lo dicho anteriormente. Finalmente, crearemos una Shiny basada en el dataset y en el problema de interés. 
+Creemos que es un fenómeno interesante de abordar, debido a que determinados niveles de obesidad pueden llegar a ser perjudiciales para la salud de una persona. A través de este análisis intentaremos conocer ciertos motivos o patrones que podrían permitir la detección o la prevención de ese riesgo.
 
-## Base de datos:
+## **Base de datos:**
 
 La base de datos está basada en encuestas web a individuos de México, Perú y Colombia. El 23% de las observaciones se recopilaron directamente desde las encuestas mientras que el 77% fueron creados sinteticamente utilizando la herramienta Woka y el filtro SMOTE, con el fin de equiparar la cantidad de datos en cada categoría y así los distintos algoritmos que se pueden llegar a utilizar con el dataframe funcionen de una mejor manera.
 
 La variable de respuesta de la base de datos es NObeyesdad. Cada individuo fue categorizado según el siguiente criterio:
 
--   Insufficient_Weight (Bajo peso): IMC \< 18.5
+- Insufficient_Weight (Bajo peso): IMC \< 18.5
 
--   Normal_Weight (Peso normal): IMC entre 18.5 y 24.9
+- Normal_Weight (Peso normal): IMC entre 18.5 y 24.9
 
--   Overweight_Level_I (Sobrepeso Nivel 1): IMC entre 25.0 y 26.9
+- Overweight_Level_I (Sobrepeso Nivel 1): IMC entre 25.0 y 26.9
 
--   Overweight_Level_II (Sobrepeso Nivel 2): IMC entre 27.0 y 29.9
+- Overweight_Level_II (Sobrepeso Nivel 2): IMC entre 27.0 y 29.9
 
--   Obesity_Type_I (Obesidad Tipo 1): IMC entre 30.0 y 34.9
+- Obesity_Type_I (Obesidad Tipo 1): IMC entre 30.0 y 34.9
 
--   Obesity_Type_II (Obesidad Tipo 2): IMC entre 35.0 y 39.9
+- Obesity_Type_II (Obesidad Tipo 2): IMC entre 35.0 y 39.9
 
--   Obesity_Type_III (Obesidad Tipo 3 o mórbida): IMC $\ge$ 40.0
+- Obesity_Type_III (Obesidad Tipo 3 o mórbida): IMC $\ge$ 40.0
 
 donde $$\text{IMC} = \frac{\text{Peso (kg)}}{\text{Estatura (m)}^2}$$
 
 Cada una de las variables refiere a una pregunta:
 
 | Preguntas | Posibles respuestas |
-|---------------------------------|------------------------------------|
+|----------------------------------|-------------------------------------|
 | ¿Cuál es tu género? “Gender” | • Femenino • Masculino |
 | ¿Cuál es tu edad? “Age” | Valor numérico |
 | ¿Cuál es tu altura? “Height” | Valor numérico en metros |
@@ -79,13 +81,21 @@ df =
                                    ordered = TRUE))
 ```
 
-**Primer descripción de las variables:**
+### Primera descripción de las variables
 
 ```{r}
 glimpse(df)
+set.seed(1)
+slice_sample(df, n = 10) |> kable()
 ```
 
+El glimpse del dataset nos indica que este cuenta con 2111 observaciones y 17 variables. Podemos observar que de las 17 variables, tenemos 8 que son númericas, pero 5 de ellas, son realmente distintas opciones de las posibles respuestas a las preguntas, por lo que en realidad se deben tratar como un factor. Por ejemplo, en la variable TUE, el valor 0 indica "0-2 horas", el valor 1 indica "3-5 horas" y el valor 2 indica "más de 5 horas". Lo mismo ocure con las variables FCVC, NCP, CH2O y FAF.
+Sin embargo, en algunas de las 10 observaciones que se eligieron al azar, se ve como los valores de estas variables recien nombradas, no son números enteros, sino que tienen decimales. Esto se debe a que los algoritmos utilizados para generar los datos sinteticos, no reconoció que esas variables eran números enteros y creó observaciones con números decimales, lo cual, en la realidad,  no tiene sentido. Para la realización de gráficos redondearemos esas variables.
+
 ### Distribución de la variable respuesta
+
+#### Cantidad de obervaciones
+
 ```{r}
 df |> 
   ggplot() +
@@ -94,9 +104,10 @@ df |>
   labs(title = "Cantidad de datos por categoria en NObeyesdad")
 ```
 
-En el gráfico de barras, podemos observar el uso de la creación de datos sintéticos para intentar poseer una cantidad similar de datos en cada categoría. Viendo unicamente una amplia diferencia entre Obesity_Type_I e Insufficient_Weight
+En el gráfico de barras, podemos observar la creación de datos sintéticos antes mencionada, para intentar poseer una cantidad similar de datos en cada categoría. Viendo unicamente una mayor diferencia entre Obesity_Type_I e Insufficient_Weight, pero sin ser significativa.
 
-### Relación entre peso y altura
+#### Relación entre peso y altura
+
 ```{r}
 df |> 
   ggplot() +
@@ -105,29 +116,42 @@ df |>
   theme_bw()
 ```
 
-En gráfico de puntos, se observa la categorización que se realizó según la relación entre peso y altura (IMC). Además, en general, se puede ver una relación postiva entre peso y altura, a mayor altura, mayor peso.
+En gráfico de puntos, se observa claramente la distinció y categorización de las individuos según la relación entre peso y altura (IMC). Además, se puede ver una baja relación positiva entre peso y altura.
 
-### Distribución etaria por categoría
+#### Distribución etaria
+
 ```{r}
- df |> ggplot() +
+df |> ggplot() +
   geom_density(aes(x = Age, fill = NObeyesdad)) +
   theme_bw() + 
   theme(legend.position = "none") +
   facet_wrap(~NObeyesdad)
+
+summary(df$Age) |> t() |> kable()
+
+df |> 
+  group_by(NObeyesdad) |> 
+  summarize(Media = round(mean(Age),2),
+            Mediana = round(median(Age),2),
+            Desvio = round(sd(Age),2)) |> kable()
 ```
 
-En este gráfico podemos observar las edades de las personas en las distintas categorías de índice de masa corporal.En las categorías de IMC más bajas se puede observar que que la mayoría de las personas de dichas categorías son de edad más baja que en las categorías de obesidad, donde se puede observar que hay más personas cerca de los 30 o 40 años.
+En el gráfico de densidad y en las tablas, podemos observar claramente una asimetría a la derecha de la edad, puesto que el 75% de los datos tienen menos de 26 años, y sin embargo mayor edad observada es de 61 años. Además, si observamos las clases por separado, vemos como este 25% de los datos con mayor edad, se encuentra en las categorias de en medio, mientras que los más jovenes están más concentrados en las primeras tres categorías y en la última. Aunque cabe mencionar las altas concentraciones de Insufficient_Weight entre los 16 y 23 años aproximadamente, y de Obesity_Type_III, con dos modas y una muy marcada alrededor de los 26 años.
 
-### Composición por género
+#### Composición por género
+
 ```{r}
-table(df$NObeyesdad, df$Gender) |> addmargins() |> kable()
 df |> 
   ggplot() +
   geom_bar(aes(y = NObeyesdad, fill = Gender), position = "dodge") +
   theme_bw()
+
+table(df$NObeyesdad, df$Gender) |> addmargins() |> kable()
 ```
 
-En esta gràfica se observa la clasificaciòn por gèneros de las distintas categorìas estudiadas
+En el diagrama de barras y en la tabla de contingencia, podemos observar como hay algunas categorias donde la cantidad de hombres y mujeres es parecida, pero en otras se ven mayores diferencias, en especial en Obesity_Type_II, donde solamente tenemos dos observaciones de mujeres y en Obesity_Type_III, tenemos unicamente un individuo hombre. Estas diferencias no parecen ser derivadas de la realidad, con lo que muy probablemente sean producto de los algoritmos utilizados para la creación de datos sintéticos.
+
+
 
 ## Análisis exploratorio:
 
@@ -318,10 +342,8 @@ conf_mat(pred_rf2, truth = NObeyesdad, estimate = .pred_class) |>
 extract_fit_engine(wf_rforest2) |> vip()
 ```
 
-
 ## Conclusiones
-En este proyecto buscabamos identificar las variables más relacionadas que permiten explicar y predecir el nivel de obesidad de las personas. El anális exploratorio mostro que el historial familiar de sobrepeso es uno de los factores más asociados a la variable respuesta, observandose que en los niveles más altos de obecidad practicamente todos presentan antecedentes familiares.
-También identificamos patrones relevantes en la actividad física, donde a mayor frecuencia semanal generalmente se asocia a menor peso, mientras que el consumo de vegetales no mostro una relación tan intuitiva como esperabamos.
 
-En cuanto a los modelos de predicción, el Random Forest fue el que tuvo mejor desempeño, con una accuracy de 0.86 y métricas de precision, recall y F1 consistentes entre sí, lo que indica que funciona correctamente, sin señales de overfitting ni underfitting.
-El árbol de decisión, si bien tuvo un desempeño inferior (accuracy de 0.62), nos sirvio para la interpretación, permitiendonos ver cómo funciona el proceso de decisión del modelo, algo que el Random Forest no nos permite ver.
+En este proyecto buscabamos identificar las variables más relacionadas que permiten explicar y predecir el nivel de obesidad de las personas. El anális exploratorio mostro que el historial familiar de sobrepeso es uno de los factores más asociados a la variable respuesta, observandose que en los niveles más altos de obecidad practicamente todos presentan antecedentes familiares. También identificamos patrones relevantes en la actividad física, donde a mayor frecuencia semanal generalmente se asocia a menor peso, mientras que el consumo de vegetales no mostro una relación tan intuitiva como esperabamos.
+
+En cuanto a los modelos de predicción, el Random Forest fue el que tuvo mejor desempeño, con una accuracy de 0.86 y métricas de precision, recall y F1 consistentes entre sí, lo que indica que funciona correctamente, sin señales de overfitting ni underfitting. El árbol de decisión, si bien tuvo un desempeño inferior (accuracy de 0.62), nos sirvio para la interpretación, permitiendonos ver cómo funciona el proceso de decisión del modelo, algo que el Random Forest no nos permite ver.
