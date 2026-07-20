@@ -260,6 +260,7 @@ Aca logramos ver como dentro de los no fumadores, la frecuencia se distribuye pr
 En primer lugar, realizamos un Random Forest, con el objetivo de predecir la variable "NObeyesdad". Sabemos que los valores de esta variable, son en realidad, los distintos posibles resultados del valor de IMC, que es una formula matemática que relaciona el peso y la altura, es decir, si se conoce el peso y la altura, automaticamente se conoce el valor de "NObeyesdad". Por ello, para que el modelo que base en el resto de las variables y no en una formula matemática, simplemente las quitamos del modelo. De lo contrario, el modelo captaria esa relación y no tendría en cuenta el resto de las variables, que son aquellas que realmente queremos que se utilizen como explicativas.
 
 [Resultados:]{.underline}
+
 ```{r}
 set.seed(1)
 split = initial_split(df, prop = 0.8, strata = NObeyesdad)
@@ -306,10 +307,10 @@ wf_rforest |>
 
 El vip nos muestra que la edad, el consuma de vegetales y el tiempo de uso de dispositivos electronicos son las variables con mayor nivel predictivo del modelo, incluso más que las variables que nosotros pensamos en un inicio que serian las más determinantes, que analizamos anteriomente (actividad fisica e historial familiar).
 
-Como se nombró anteriormente, el algoritimo de datos sintéticos creo algunos sesgos en las obsservaciones, que se vieron reflejadas en este modelo, donde la variable edad fue la más importante para determinar el nivel de obesidad de una persona, algo que parece muy poco intuitivo o razonable. 
-Por ello, realizamos otro modelo, donde además de dejar de lado el peso y la altura, también quitamos la variable "Age" y la variable "Gender", ambas ya analizadas y con resultados extraños y no completamente representativos de la realidad.
+Como se nombró anteriormente, el algoritimo de datos sintéticos creo algunos sesgos en las obsservaciones, que se vieron reflejadas en este modelo, donde la variable edad fue la más importante para determinar el nivel de obesidad de una persona, algo que parece muy poco intuitivo o razonable. Por ello, realizamos otro modelo, donde además de dejar de lado el peso y la altura, también quitamos la variable "Age" y la variable "Gender", ambas ya analizadas y con resultados extraños y no completamente representativos de la realidad.
 
 [Resultados:]{.underline}
+
 ```{r}
 receta_rf2 <- recipe(NObeyesdad ~ ., data = train_df) |> 
   step_rm(Weight, Height, Age, Gender)
@@ -340,16 +341,17 @@ conf_mat(pred_rf2, truth = NObeyesdad, estimate = .pred_class) |>
 
 extract_fit_engine(wf_rforest2) |> vip()
 ```
+
 En este segundo Random Forest, como era esperable, tuvo un menor rendimiento, pero sigue siendo un buen modelo, con las cuatro metricas entre 0.79 y 0.80, que se ve reflejado en la matriz de confusión, donde gran parte de las observaciones se encuentran en la matriz diagonal. También se puede observar como las categorías donde tiene mayor precisión son las extremos y en las centrales, sobre todo los niveles de sobrepeso, es donde tiene mayores errores.
 
 En el gráfico vip, vemos como por una amplica diferencia la variable "FCVC" es la más importante para el modelo, y aparecen por detrás variables como "NCP" o "CH2O" que no las habiamos tenido en cuenta en un pricipio y el modelo les dio gran importancia, por encima de las que si creíamos que serian importantes.
 
 ### Árbol de decisión:
 
-Por último, para tener una comparación entre modelos y observas sus diferencias, realizamos un árbol de decisión. Es esperable que tenga un menor desempeño, pero nos ayuda en la interpretación del mismo y en el costo comptacional.
-Para el árbol si se utilizaron las variables edad y género.
+Por último, para tener una comparación entre modelos y observas sus diferencias, realizamos un árbol de decisión. Es esperable que tenga un menor desempeño, pero nos ayuda en la interpretación del mismo y en el costo comptacional. Para el árbol si se utilizaron las variables edad y género.
 
 [Resultados:]{.underline}
+
 ```{r}
 rtree = decision_tree(min_n = 5) |> 
   set_engine("rpart") |> 
@@ -388,21 +390,28 @@ El árbol de decisión obtuvo una accuracy de 0,62, menor al del Random Forest. 
 
 En cuanto a las variables más relevantes, el árbol de decisión toma el consumo de vegetables, el comer algo entre comidas, el género y la edad, lo cual no coincide perectamente con lo visto en el Random Forest.
 
-
 ## Aplicación Shiny
 
-Como se describió en la introduccion, además de este análisis exploratorio, realizamos una aplicación Shiny basada en este trabajo, con el objetivo de tener una visualización más interactiva y la posibilidad de observar las relaciones entre cualesquiera de las variables del dataset.
-La aplicación cuenta con cuatro pestañas:
-Inicio: Introduce al visitante a la aplicación y al trabajo realizado.
-Base de datos: Muestra y explica el dataset.
-Exploratorio: Posibilita visualizar en gráficos y tablas relación entre variables.
-Calculadora IMC: Permite ingresar peso y altura e indica el IMC y categoría correspondiente.
-Modelo predictivo: Predice el nivel de obesidad con las respuestas que se ingresen. Se utiliza el segundo Random Forest realizado.
+Como se describió en la introduccion, además de este análisis exploratorio, realizamos una aplicación Shiny basada en este trabajo, con el objetivo de tener una visualización más interactiva y la posibilidad de observar las relaciones entre cualesquiera de las variables del dataset. La aplicación cuenta con cuatro pestañas:
 
-Enlace de la aplicación:  <https://emilianosantesevan.shinyapps.io/shiny-proyecto/>
+\- Inicio: Introduce al visitante a la aplicación y al trabajo realizado.
+
+\- Base de datos: Muestra y explica el dataset.
+
+\- Exploratorio: Posibilita visualizar en gráficos y tablas relación entre variables.
+
+\- Calculadora IMC: Permite ingresar peso y altura e indica el IMC y categoría correspondiente.
+
+\- Modelo predictivo: Predice el nivel de obesidad con las respuestas que se ingresen. Se utiliza el segundo Random Forest realizado.
+
+**Enlace de la aplicación:** <https://emilianosantesevan.shinyapps.io/shiny-proyecto/>
 
 ## Conclusiones
 
 En este proyecto buscabamos identificar las variables más relacionadas que permiten explicar y predecir el nivel de obesidad de las personas. El análisis exploratorio mostro que el historial familiar de sobrepeso es uno de los factores más asociados a la variable respuesta, observandose que en los niveles más altos de obecidad practicamente todos presentan antecedentes familiares. También identificamos patrones relevantes en la actividad física, donde a mayor frecuencia semanal generalmente se asocia a menor peso, mientras que el consumo de vegetales mostró una relación que no esperabamos. Con los modelos, pudimos ratificar y tanto la actividad fisíca como el consumo de vegetales eran importantes, pero también aparecieron otras variables como la cantidad de comidad principales y el consumo de agua, que no creíamos que sería relevantes pero que en verdad si lo eran. El buen resultado de los modelos y del random forest en especial, nos muestra que existen ciertos patrones de conducta que pueden estar relacionados e implicados con el nivel de obesidad.
 
 Como posible lineas de trabajo futuras, sería, en primer lugar, obtener una base lo suficientemente grande de encuestas reales para evitar problemas o inconvenientes y detalles que se deben tener en cuenta con el uso de datos sintéticos. Además también se podrían obtener otras variables númericas, que permitan el uso de otras herramientas a la hora de analizarlas, ya que gran parte de las variables que utilizamos eran variables factorizadas.
+
+## Referencias
+
+- Estimation of Obesity Levels Based On Eating Habits and Physical Condition \[Dataset\]. (2019). UCI Machine Learning Repository. <https://doi.org/10.24432/C5H31Z>.
